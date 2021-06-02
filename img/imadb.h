@@ -1,31 +1,40 @@
+#include "activity.h"
+#include "types.h"
 #include <dirent.h>
+#include "event_sync.h"
+#include <libfswatch.h>
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
 
+#pragma once
+
 namespace Im {
 
-struct Node {
-  std::string name;
-  off_t size;
-  std::string path;
-  unsigned char type;
-};
+class ImDB: Im::EventSubscriber {
 
-class ImDB {
 public:
-  ImDB(std::string, std::list<std::string>, int);
-  std::vector<Im::Node> paths_for(std::string);
-  Im::Node *node_for(std::string);
+    ImDB(const std::string&, std::list<std::string>, int include_folders);
+
+    // Get path information
+    std::vector<Im::Node> paths_for(const std::string&);
+    Im::Node* node_for(const std::string&);
 
 private:
-  std::vector<Im::Node> listd(std::string);
-  std::string base;
-  std::list<std::string> filters;
-  std::vector<Im::Node> knownPaths;
-  int include_folders;
-  std::map<std::string, int> mapped;
+    void receive(const Im::FileEvent& event) override;
+    void insertFile(const FileEvent& event);
+
+    std::string base;
+    std::list<std::string> filters;
+    std::vector<Im::Node> knownPaths;
+    int include_folders;
+    std::map<std::string, Im::Node> mapped;
+    ActivityService* activity;
+    void updateFile(const FileEvent& event);
+    std::string normalizePath(const std::string& basicString);
 };
 }; // namespace Im

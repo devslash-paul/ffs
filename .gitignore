@@ -12,3 +12,6 @@ _deps
 .DS_Store
 build
 *.so
+FFS
+.ninja_deps
+.ninja_log

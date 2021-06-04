@@ -126,10 +126,10 @@ static void show_help(const char* progname)
     printf("usage: %s [options] <mountpoint>\n\n", progname);
     printf(
         "FFS specific options\n"
-        "   --base=<s>      Base directory to flatten\n"
-        "   --include-dirs  Allow directories to be included in the listing "
-        "(will be empty)\n"
-        "   --ftype=<1>,<2> File types to filter for, comma separated\n");
+        "   --base=<s>,-b=<s>  Base directory to flatten\n"
+        "   --include-dirs     Allow directories to be included in the listing "
+        "(all folders will be empty)\n"
+        "   --ftype=<1>,<2>    File types to filter for, comma separated\n");
 }
 
 int main(int argc, char* argv[])

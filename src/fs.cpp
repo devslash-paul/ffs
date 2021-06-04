@@ -31,13 +31,11 @@ static const struct fuse_opt option_spec[] = {
     FUSE_OPT_END
 };
 
-const char* contents = strdup("HI\n");
-static Im::ImDB* db = NULL;
+extern Im::ImDB* db;
 
-static void* hello_init(struct fuse_conn_info* conn)
+static void* init(struct fuse_conn_info* conn)
 {
-    (void)conn;
-    return NULL;
+    return nullptr;
 }
 
 int i = 0;
@@ -86,7 +84,6 @@ thread_local FFS::FileBuffer fbuf;
 static int read_callback(const char* path, char* buf, size_t size, off_t off,
     struct fuse_file_info* info)
 {
-    memset(buf, 0, sizeof buf);
     auto file = db->node_for(path);
     if (file != nullptr) {
 
@@ -106,19 +103,15 @@ static int read_callback(const char* path, char* buf, size_t size, off_t off,
         return size;
     }
 
-    if (off > 0) {
-        return 0;
-    }
-    memcpy(buf, contents, 3);
-    return 3;
+    return 0;
 }
 
-static const struct fuse_operations hello_oper = {
+static const struct fuse_operations operations = {
     .getattr = getattr_callback,
     .open = open_callback,
     .read = read_callback,
     .readdir = readdir_callback,
-    .init = hello_init,
+    .init = init,
 };
 
 static void show_help(const char* progname)
@@ -158,7 +151,7 @@ int main(int argc, char* argv[])
         }
         db = new Im::ImDB(options.base, tokens, options.include_folders);
     }
-    int ret = fuse_main(args.argc, args.argv, &hello_oper, nullptr);
+    int ret = fuse_main(args.argc, args.argv, &operations, nullptr);
     fuse_opt_free_args(&args);
     return ret;
 }

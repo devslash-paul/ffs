@@ -1,0 +1,6 @@
+Package: ffs
+Version: 1.0
+Architecture: any
+Maintainer: Paul Thompson <pault@devslash.net>
+Description: A flattened file system
+ You can add a longer description here. Mind the space at the beginning of this paragraph.

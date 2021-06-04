@@ -36,5 +36,6 @@ private:
     ActivityService* activity;
     void updateFile(const FileEvent& event);
     std::string normalizePath(const std::string& basicString);
+    void removeFile(const FileEvent& event);
 };
 }; // namespace Im

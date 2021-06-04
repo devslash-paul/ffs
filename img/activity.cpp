@@ -12,7 +12,6 @@ using namespace Im;
 
 static void on_event(const std::vector<fsw::event>& evt, void* v)
 {
-    std::cout << "Event called " << std::endl;
     for (auto v : evt) {
         for (auto flag : v.get_flags()) {
             switch (flag) {
@@ -53,17 +52,9 @@ ActivityService::ActivityService(const std::vector<std::string>& paths)
     mon->set_follow_symlinks(false);
     this->activity_monitor = mon;
     // Kick off the EVT thread
-    std::cout << "Kicking off thread" << std::endl;
     this->activity_thread = std::thread([&]() {
         this->activity_monitor->start();
     });
-//    this->checker = std::thread([&]() {
-//        while (true) {
-//            std::cout << "IS RUNNING - " << this->activity_monitor->is_running() << std::endl;
-//            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-//        }
-//    });
-    std::cout << "Done" << std::endl;
 }
 
 ActivityService::~ActivityService()

@@ -82,12 +82,12 @@ Im::Node* ImDB::node_for(const std::string& path)
 
 void ImDB::receive(const FileEvent& event)
 {
-    std::cout << "RECEIVED A FILE EVENT " << event.type << std::endl;
     switch (event.type) {
     case CREATED:
-        //        insertFile(event);
+        // CREATED always seems to couple to an update. So may as well just do that one
         break;
     case DELETED:
+        removeFile(event);
         break;
     case RENAMED:
         break;
@@ -115,7 +115,6 @@ void ImDB::insertFile(const FileEvent& event)
     };
     this->knownPaths.push_back(pathNode);
     this->mapped[event.path] = pathNode;
-    std::cout << "INSERTED" << std::endl;
 }
 
 void ImDB::updateFile(const FileEvent& event)
@@ -144,6 +143,23 @@ void ImDB::updateFile(const FileEvent& event)
     this->knownPaths.push_back(pathNode);
     const std::string& normalPath = normalizePath(event.path);
     this->mapped[normalPath] = pathNode;
+}
+
+void ImDB::removeFile(const FileEvent& event)
+{
+    std::vector<char> buf(event.path.begin(), event.path.end());
+
+    auto iter = this->knownPaths.begin();
+
+    for (; iter != this->knownPaths.end(); iter++) {
+        if(std::strcmp(iter->path.c_str(), &buf[0]) == 0) {
+            this->knownPaths.erase(iter);
+            break;
+        }
+    }
+
+    const auto normalPath = normalizePath(event.path);
+    this->mapped.erase(normalPath);
 }
 
 std::string ImDB::normalizePath(const std::string& path)

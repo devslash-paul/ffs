@@ -4,16 +4,11 @@
 #include <assert.h>
 #include <cstring>
 #include <errno.h>
-#include <fstream>
 #include <iostream>
 
 #define FUSE_USE_VERSION 35
 
 #include <fuse.h>
-
-// TODO
-// ------------------
-// Make it _live_ so it's not just static, but reacts to additions.
 
 static struct options {
     const char* base;
@@ -30,9 +25,9 @@ static struct options {
 static const struct fuse_opt option_spec[] = {
     OPTION("--ftype=%s", filter),
     OPTION("--base=%s", base),
+    OPTION("-b=%s", base),
     OPTION("--include-dirs", include_folders),
     OPTION("--help", show_help),
-    OPTION("-b=%s", base),
     FUSE_OPT_END
 };
 
@@ -51,7 +46,7 @@ static int getattr_callback(const char* path, struct stat* stbuf)
     memset(stbuf, 0, sizeof(struct stat));
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
-        i+= 10000000;
+        i += 10000000;
         stbuf->st_mtime = i;
         stbuf->st_nlink = 2;
     } else {

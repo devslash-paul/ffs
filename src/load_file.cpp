@@ -8,6 +8,11 @@ using namespace FFS;
 
 const int LOAD_FILE_MAX = 30;
 
+//TODO
+// Make it so you can specify the naming pattern when duplicates occur
+// General duplication strategy
+// Some way to get the original file location
+
 // So what i do is have the map that points to the index
 FILE* FileBuffer::open(const char* filename, const char* mode)
 {

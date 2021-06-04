@@ -31,7 +31,7 @@ static const struct fuse_opt option_spec[] = {
     FUSE_OPT_END
 };
 
-extern Im::ImDB* db;
+Im::ImDB* db;
 
 static void* init(struct fuse_conn_info* conn)
 {

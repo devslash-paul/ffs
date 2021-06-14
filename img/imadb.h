@@ -1,11 +1,13 @@
 #include "activity.h"
+#include "direc_discovery.h"
+#include "event_sync.h"
 #include "types.h"
 #include <dirent.h>
-#include "event_sync.h"
 #include <libfswatch.h>
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -15,7 +17,7 @@
 
 namespace Im {
 
-class ImDB: Im::EventSubscriber {
+class ImDB : Im::EventSubscriber {
 
 public:
     ImDB(const std::string&, std::list<std::string>, int include_folders);
@@ -28,9 +30,10 @@ private:
     void receive(const Im::FileEvent& event) override;
     void insertFile(const FileEvent& event);
 
+    Im::DirectoryTraverser* dirTraverser;
     std::string base;
     std::list<std::string> filters;
-    std::vector<Im::Node> knownPaths;
+    std::set<Im::Node> knownPaths;
     int include_folders;
     std::map<std::string, Im::Node> mapped;
     ActivityService* activity;

@@ -1,8 +1,10 @@
 #include "types.h"
+#include "event_sync.h"
 #include <list>
 #include <map>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #pragma once
@@ -13,16 +15,18 @@ typedef typename std::map<std::string, std::unique_ptr<std::list<std::string>>> 
 class DirectoryTraverser {
 
 public:
-    explicit DirectoryTraverser(bool);
+    explicit DirectoryTraverser(bool, Im::EventStream&);
     // Get a flattened list of all nodes for a path
-    std::vector<Im::Node> flatten_dir(const std::string&);
+    void flatten_dir(const std::string&);
 
 private:
     bool include_folders;
     namecache nc;
+    const Im::EventStream& evt;
 
-    std::vector<Im::Node> listd(const std::string&);
+    void listd(const std::string&);
     std::string findName(std::string);
+    std::thread runThread;
 };
 
 };

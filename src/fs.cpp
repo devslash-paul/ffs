@@ -9,6 +9,7 @@
 #define FUSE_USE_VERSION 35
 
 #include <fuse.h>
+// TODO: Large directories update over time
 
 static struct options {
     const char* base;
@@ -73,7 +74,6 @@ static int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler,
     filler(buf, "..", nullptr, 0);
     for (auto& x : db->paths_for(path)) {
         filler(buf, x.name.c_str(), nullptr, 0);
-        std::cout << "Adding " << x.name << std::endl;
     }
     return 0;
 }

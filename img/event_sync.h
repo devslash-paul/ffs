@@ -11,7 +11,7 @@ public:
 
 class EventStream {
 public:
-    void accept(const Im::FileEvent& evt);
+    void accept(const Im::FileEvent& evt) const;
 
     // Only one subscriber supported right now
     void setSubscriber(EventSubscriber* sub);

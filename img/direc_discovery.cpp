@@ -1,24 +1,29 @@
 #include "direc_discovery.h"
+#include "event_sync.h"
 #include <cstring>
 #include <dirent.h>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
 using namespace Im;
 
-DirectoryTraverser::DirectoryTraverser(bool include_folders)
+DirectoryTraverser::DirectoryTraverser(bool include_folders, Im::EventStream& evt)
+    : evt(evt)
 {
     this->include_folders = include_folders;
 }
 
-std::vector<Im::Node> DirectoryTraverser::flatten_dir(const std::string& path)
+void DirectoryTraverser::flatten_dir(const std::string& path)
 {
-    return this->listd(path);
+    this->runThread = std::thread([&]() {
+        this->listd(path);
+    });
 }
 
-std::vector<Im::Node> DirectoryTraverser::listd(const std::string& path)
+void DirectoryTraverser::listd(const std::string& path)
 {
     std::vector<Im::Node> paths;
     auto base = opendir(path.c_str());
@@ -33,36 +38,36 @@ std::vector<Im::Node> DirectoryTraverser::listd(const std::string& path)
             continue;
 
         if (next->d_type == DT_DIR) {
-            auto inner = listd(path + "/" + next->d_name);
+            listd(path + "/" + next->d_name);
             if (this->include_folders) {
-                paths.push_back((Im::Node) { .name = next->d_name,
-                    .size = 0,
-                    .path = path,
-                    .type = next->d_type });
-            }
-            for (auto& x : inner) {
-                paths.push_back(x);
+                this->evt.accept(Im::FileEvent {
+                    .type = UPDATED,
+                    .nodeType = next->d_type,
+                    .path = path + "/" + next->d_name });
             }
         } else if (next->d_type == DT_REG) {
-            struct stat st {
-            };
-            stat((path + "/" + next->d_name).c_str(), &st);
+            // struct stat st {
+            // };
+            // stat((path + "/" + next->d_name).c_str(), &st);
             auto name = findName(std::string(next->d_name));
-            paths.push_back((Im::Node) {
-                .name = name,
-                .size = st.st_size,
-                .created = st.st_ctime,
-                .modified = st.st_mtime,
-                .accessed = st.st_atime,
-                .path = path + "/" + next->d_name,
-                .type = next->d_type,
-            });
+            this->evt.accept(Im::FileEvent {
+                .type = UPDATED,
+                .nodeType = next->d_type,
+                .path = path + "/" + next->d_name });
+            // paths.push_back((Im::Node) {
+            //     .name = name,
+            //     .size = st.st_size,
+            //     .created = st.st_ctime,
+            //     .modified = st.st_mtime,
+            //     .accessed = st.st_atime,
+            //     .path = path + "/" + next->d_name,
+            //     .type = next->d_type,
+            // });
         }
     }
     if (closedir(base) != 0) {
         std::cout << "Error closing dir " << base << strerror(errno) << std::endl;
     }
-    return paths;
 }
 
 std::string DirectoryTraverser::findName(std::string name)

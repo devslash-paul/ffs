@@ -14,6 +14,16 @@ struct Node {
     long accessed;
     std::string path;
     unsigned char type;
+
+    bool operator<(const Node& y) const
+    {
+        return path.compare(y.path) < 0;
+    }
+};
+
+enum NodeType {
+    NODE_FILE,
+    NODE_FOLDER
 };
 
 enum EventType {
@@ -25,6 +35,7 @@ enum EventType {
 
 struct FileEvent {
     EventType type;
+    unsigned char nodeType;
     std::string path;
 };
 

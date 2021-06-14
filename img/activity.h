@@ -14,9 +14,7 @@ public:
     ~ActivityService();
 
 private:
-    std::vector<std::string> paths;
     fsw::monitor* activity_monitor;
     std::thread activity_thread;
-    std::thread checker;
 };
-};
+}

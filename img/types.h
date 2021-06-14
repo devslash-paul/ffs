@@ -15,15 +15,10 @@ struct Node {
     std::string path;
     unsigned char type;
 
-    bool operator<(const Node& y) const
-    {
-        return path.compare(y.path) < 0;
-    }
-};
-
-enum NodeType {
-    NODE_FILE,
-    NODE_FOLDER
+//    bool operator<(const Node& y) const
+//    {
+//        return path.compare(y.path) < 0;
+//    }
 };
 
 enum EventType {
@@ -39,4 +34,4 @@ struct FileEvent {
     std::string path;
 };
 
-};
+}

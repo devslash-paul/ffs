@@ -1,9 +1,10 @@
 #include "imadb.h"
+#include "activity.h"
 #include "load_file.h"
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <cstring>
-#include <errno.h>
+#include <cerrno>
 #include <iostream>
 
 #define FUSE_USE_VERSION 35
@@ -33,20 +34,18 @@ static const struct fuse_opt option_spec[] = {
 };
 
 Im::ImDB* db;
+Im::ActivityService* ct;
 
 static void* init(struct fuse_conn_info* conn)
 {
     return nullptr;
 }
 
-int i = 0;
 static int getattr_callback(const char* path, struct stat* stbuf)
 {
     memset(stbuf, 0, sizeof(struct stat));
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
-        i += 10000000;
-        stbuf->st_mtime = i;
         stbuf->st_nlink = 2;
     } else {
         auto node = db->node_for(path);
@@ -100,7 +99,7 @@ static int read_callback(const char* path, char* buf, size_t size, off_t off,
         fseek(pFile, off, SEEK_SET);
         fread(buf, size, 1, pFile);
         fbuf.close(file->path.c_str());
-        return size;
+        return static_cast<int>(size);
     }
 
     return 0;
@@ -140,7 +139,7 @@ int main(int argc, char* argv[])
         std::list<std::string> tokens;
         if (options.filter != nullptr) {
             auto delim = ",";
-            size_t pos = 0;
+            size_t pos;
             auto filter = std::string(options.filter);
             while ((pos = filter.find(delim)) != std::string::npos) {
                 auto token = filter.substr(0, pos);
@@ -149,9 +148,12 @@ int main(int argc, char* argv[])
             }
             tokens.push_back(filter);
         }
+        ct = new Im::ActivityService({ options.base });
         db = new Im::ImDB(options.base, tokens, options.include_folders);
     }
     int ret = fuse_main(args.argc, args.argv, &operations, nullptr);
     fuse_opt_free_args(&args);
+    delete ct;
+    delete ct;
     return ret;
 }

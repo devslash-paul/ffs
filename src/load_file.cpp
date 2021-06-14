@@ -44,7 +44,7 @@ FILE* FileBuffer::open(const char* filename, const char* mode)
     // It is the
     auto value = it->second->second;
     return value;
-};
+}
 
 void FileBuffer::close(const char* file)
 {
@@ -53,4 +53,4 @@ void FileBuffer::close(const char* file)
     if (found == this->cache.end()) {
         fclose(found->second->second);
     }
-};
+}

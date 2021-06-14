@@ -16,6 +16,7 @@ class DirectoryTraverser {
 
 public:
     explicit DirectoryTraverser(bool, Im::EventStream&);
+    ~DirectoryTraverser();
     // Get a flattened list of all nodes for a path
     void flatten_dir(const std::string&);
 
@@ -24,9 +25,9 @@ private:
     namecache nc;
     const Im::EventStream& evt;
 
-    void listd(const std::string&);
+    void list_directory(const std::string& path);
     std::string findName(std::string);
     std::thread runThread;
 };
 
-};
+}

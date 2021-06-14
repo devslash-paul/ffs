@@ -12,20 +12,19 @@ using namespace Im;
 
 DirectoryTraverser::DirectoryTraverser(bool include_folders, Im::EventStream& evt)
     : evt(evt)
+    , include_folders(include_folders)
 {
-    this->include_folders = include_folders;
 }
 
 void DirectoryTraverser::flatten_dir(const std::string& path)
 {
     this->runThread = std::thread([&]() {
-        this->listd(path);
+        this->list_directory(path);
     });
 }
 
-void DirectoryTraverser::listd(const std::string& path)
+void DirectoryTraverser::list_directory(const std::string& path)
 {
-    std::vector<Im::Node> paths;
     auto base = opendir(path.c_str());
 
     if (base == nullptr) {
@@ -38,7 +37,7 @@ void DirectoryTraverser::listd(const std::string& path)
             continue;
 
         if (next->d_type == DT_DIR) {
-            listd(path + "/" + next->d_name);
+            list_directory(path + "/" + next->d_name);
             if (this->include_folders) {
                 this->evt.accept(Im::FileEvent {
                     .type = UPDATED,
@@ -70,6 +69,7 @@ void DirectoryTraverser::listd(const std::string& path)
     }
 }
 
+//TODO: FindName isn't being used
 std::string DirectoryTraverser::findName(std::string name)
 {
     auto there = this->nc.find(name);
@@ -91,4 +91,8 @@ std::string DirectoryTraverser::findName(std::string name)
         nc[name]->push_back(name.substr(0, lastDot) + std::to_string(size) + name.substr(lastDot, name.size()));
     }
     return nc[name]->back();
+}
+DirectoryTraverser::~DirectoryTraverser()
+{
+    this->runThread.join();
 }

@@ -17,6 +17,10 @@
 
 namespace Im {
 
+auto path_only_cmp = [](const Node& a, const Node& b) {
+    return a.path < b.path;
+};
+
 class ImDB : Im::EventSubscriber {
 
 public:
@@ -28,17 +32,14 @@ public:
 
 private:
     void receive(const Im::FileEvent& event) override;
-    void insertFile(const FileEvent& event);
 
-    Im::DirectoryTraverser* dirTraverser;
+    Im::DirectoryTraverser dirTraverser;
     std::string base;
     std::list<std::string> filters;
-    std::set<Im::Node> knownPaths;
-    int include_folders;
+    std::set<Im::Node, decltype(path_only_cmp)> knownPaths;
     std::map<std::string, Im::Node> mapped;
-    ActivityService* activity;
     void updateFile(const FileEvent& event);
     std::string normalizePath(const std::string& basicString);
     void removeFile(const FileEvent& event);
 };
-}; // namespace Im
+}

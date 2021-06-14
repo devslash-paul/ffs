@@ -1,7 +1,7 @@
 #include "activity.h"
 #include "event_sync.h"
-#include <chrono>
 #include <cmonitor.h>
+#include <dirent.h>
 #include <event.hpp>
 #include <functional>
 #include <libfswatch.h>
@@ -10,30 +10,33 @@
 
 using namespace Im;
 
-static void on_event(const std::vector<fsw::event>& evt, void* v)
+static void on_event(const std::vector<fsw::event>& evts, void* v)
 {
-    for (auto v : evt) {
-        for (auto flag : v.get_flags()) {
+    for (const auto& evt : evts) {
+        for (auto flag : evt.get_flags()) {
             switch (flag) {
             case fsw_event_flag::Created:
-                fsWatchStream.accept({ //
+                // eg - touch. Often followed by an update
+                fsWatchStream.accept(FileEvent { //
                     .type = Im::CREATED,
-                    .path = v.get_path() });
+                    .nodeType = DT_REG,
+                    .path = evt.get_path() });
                 break;
             case fsw_event_flag::Removed:
                 fsWatchStream.accept({ //
                     .type = Im::DELETED,
-                    .path = v.get_path() });
+                    .path = evt.get_path() });
                 break;
             case fsw_event_flag::Renamed:
                 fsWatchStream.accept({ //
                     .type = Im::RENAMED,
-                    .path = v.get_path() });
+                    .path = evt.get_path() });
                 break;
             case fsw_event_flag::Updated:
-                fsWatchStream.accept({ //
+                fsWatchStream.accept(FileEvent { //
                     .type = Im::UPDATED,
-                    .path = v.get_path() });
+                    .nodeType = DT_REG, // FIXME; not everything is a file
+                    .path = evt.get_path() });
                 break;
             default:
                 break;
@@ -44,7 +47,6 @@ static void on_event(const std::vector<fsw::event>& evt, void* v)
 
 ActivityService::ActivityService(const std::vector<std::string>& paths)
 {
-    this->paths = paths;
     auto mon = fsw::monitor_factory::create_monitor(fsw_monitor_type::system_default_monitor_type,
         paths,
         &on_event);

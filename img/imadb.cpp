@@ -1,5 +1,4 @@
 #include "imadb.h"
-#include "activity.h"
 #include "direc_discovery.h"
 #include "types.h"
 #include <algorithm>
@@ -13,12 +12,12 @@
 
 using namespace Im;
 
-// AIM - this should be setting thigns only
 ImDB::ImDB(const std::string& base, std::list<std::string> filters,
     int include_folders)
-    : include_folders(include_folders)
-    , base(base)
+    : base(base)
+    , knownPaths(path_only_cmp)
     , filters(std::move(filters))
+    , dirTraverser(include_folders, Im::fsWatchStream)
 {
     // TODO - support multiple base paths
     std::vector<std::string> basePaths({ base });
@@ -27,16 +26,11 @@ ImDB::ImDB(const std::string& base, std::list<std::string> filters,
     // all the startup events to teh fsWatchStream
     Im::fsWatchStream.setSubscriber(this);
 
-    std::cout << "Initializing activity server..." << std::endl;
-    this->activity = new ActivityService(basePaths);
-
-    std::cout << "Initializing dir traverser..." << std::endl;
-    this->dirTraverser = new Im::DirectoryTraverser(include_folders, Im::fsWatchStream);
-
     std::cout << "Initializing...";
     std::cout.flush();
-    namecache nameCache;
-    this->dirTraverser->flatten_dir(base);
+
+    // TODO: This only really is here so that set_subscriber is already called
+    this->dirTraverser.flatten_dir(base);
 
     std::cout << " Done!\n";
 }
@@ -81,56 +75,25 @@ Im::Node* ImDB::node_for(const std::string& path)
 void ImDB::receive(const FileEvent& event)
 {
     switch (event.type) {
-    case CREATED:
-        // CREATED always seems to couple to an update. So may as well just do that one
-        break;
     case DELETED:
         removeFile(event);
         break;
     case RENAMED:
         break;
+    case CREATED:
     case UPDATED:
         updateFile(event);
         break;
     }
 }
 
-void ImDB::insertFile(const FileEvent& event)
-{
-    std::vector<char> buf(event.path.begin(), event.path.end());
-    auto baseName = basename(&buf[0]);
-    struct stat s {
-    };
-    stat(event.path.c_str(), &s);
-    const Node& pathNode = Node {
-        .name = baseName,
-        .size = s.st_size,
-        .created = s.st_ctime,
-        .modified = s.st_mtime,
-        .accessed = s.st_atime,
-        .path = event.path,
-        .type = DT_REG
-    };
-    this->knownPaths.insert(pathNode);
-    this->mapped[event.path] = pathNode;
-}
-
-// What's the O(?)?
 void ImDB::updateFile(const FileEvent& event)
 {
     auto cpath = event.path.c_str();
-    // in /usr/test/test.jpg this returns test.jps
     auto baseName = basename(strdup(cpath));
     struct stat s {
     };
     stat(event.path.c_str(), &s);
-
-    // auto x = this->knownPaths.begin();
-    // for (; x != this->knownPaths.end(); x++) {
-    //     if (std::strcmp(x->path.c_str(), &cpath[0]) == 0) {
-    //         break;
-    //     }
-    // }
     const Node& pathNode = Node {
         .name = baseName,
         .size = s.st_size,
@@ -141,9 +104,10 @@ void ImDB::updateFile(const FileEvent& event)
         .type = event.nodeType,
     };
 
-
+    // I can probably just change things rather than do all of this
+    // TODO: Make this more efficient by updating in place
     if (this->knownPaths.find(pathNode) != this->knownPaths.end()) {
-            this->knownPaths.erase(pathNode);
+        this->knownPaths.erase(pathNode);
     }
 
     if (event.nodeType == DT_REG) {
@@ -156,17 +120,8 @@ void ImDB::updateFile(const FileEvent& event)
 
 void ImDB::removeFile(const FileEvent& event)
 {
-    std::vector<char> buf(event.path.begin(), event.path.end());
-
-    auto iter = this->knownPaths.begin();
-
-    for (; iter != this->knownPaths.end(); iter++) {
-        if (std::strcmp(iter->path.c_str(), &buf[0]) == 0) {
-            this->knownPaths.erase(iter);
-            break;
-        }
-    }
-
+    this->knownPaths.erase(Node {
+        .path = event.path });
     const auto normalPath = normalizePath(event.path);
     this->mapped.erase(normalPath);
 }

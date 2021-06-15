@@ -12,12 +12,10 @@
 
 using namespace Im;
 
-ImDB::ImDB(const std::string& base, std::list<std::string> filters,
-    int include_folders)
+ImDB::ImDB(const std::string& base, std::list<std::string> filters)
     : base(base)
     , knownPaths(path_only_cmp)
     , filters(std::move(filters))
-    , dirTraverser(include_folders, Im::fsWatchStream)
 {
     // TODO - support multiple base paths
     std::vector<std::string> basePaths({ base });
@@ -25,14 +23,6 @@ ImDB::ImDB(const std::string& base, std::list<std::string> filters,
     // This means that rather than blocking i should really just supply
     // all the startup events to teh fsWatchStream
     Im::fsWatchStream.setSubscriber(this);
-
-    std::cout << "Initializing...";
-    std::cout.flush();
-
-    // TODO: This only really is here so that set_subscriber is already called
-    this->dirTraverser.flatten_dir(base);
-
-    std::cout << " Done!\n";
 }
 
 inline bool hasEnding(const std::string& fullString, const std::string& ending)

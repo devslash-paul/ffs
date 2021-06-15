@@ -24,7 +24,7 @@ auto path_only_cmp = [](const Node& a, const Node& b) {
 class ImDB : Im::EventSubscriber {
 
 public:
-    ImDB(const std::string&, std::list<std::string>, int include_folders);
+    ImDB(const std::string& base, std::list<std::string> filters);
 
     // Get path information
     std::vector<Im::Node> paths_for(const std::string&);
@@ -33,7 +33,8 @@ public:
 private:
     void receive(const Im::FileEvent& event) override;
 
-    Im::DirectoryTraverser dirTraverser;
+//    Im::DirectoryTraverser dirTraverser;
+
     std::string base;
     std::list<std::string> filters;
     std::set<Im::Node, decltype(path_only_cmp)> knownPaths;

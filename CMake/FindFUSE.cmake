@@ -10,7 +10,7 @@ IF (FUSE_INCLUDE_DIR)
 ENDIF (FUSE_INCLUDE_DIR)
 
 # find includes
-FIND_PATH (FUSE_INCLUDE_DIR fuse.h
+FIND_PATH(FUSE_INCLUDE_DIR fuse.h
         /usr/local/include/osxfuse
         /usr/local/include
         /usr/include
@@ -27,8 +27,8 @@ FIND_LIBRARY(FUSE_LIBRARIES
         PATHS /lib64 /lib /usr/lib64 /usr/lib /usr/local/lib64 /usr/local/lib /usr/lib/x86_64-linux-gnu
         )
 
-include ("FindPackageHandleStandardArgs")
-find_package_handle_standard_args ("FUSE" DEFAULT_MSG
+include("FindPackageHandleStandardArgs")
+find_package_handle_standard_args("FUSE" DEFAULT_MSG
         FUSE_INCLUDE_DIR FUSE_LIBRARIES)
 
-mark_as_advanced (FUSE_INCLUDE_DIR FUSE_LIBRARIES)
+mark_as_advanced(FUSE_INCLUDE_DIR FUSE_LIBRARIES)

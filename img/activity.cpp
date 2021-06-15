@@ -12,6 +12,7 @@ using namespace Im;
 
 static void on_event(const std::vector<fsw::event>& evts, void* v)
 {
+    (void) v;
     for (const auto& evt : evts) {
         for (auto flag : evt.get_flags()) {
             switch (flag) {

@@ -1,16 +1,22 @@
-#include "imadb.h"
 #include "activity.h"
+#include "imadb.h"
 #include "load_file.h"
 #include <algorithm>
 #include <cassert>
-#include <cstring>
 #include <cerrno>
+#include <cstring>
 #include <iostream>
 
 #define FUSE_USE_VERSION 35
+//TODO: Reintroduce naming fixup for collision files
 
 #include <fuse.h>
-// TODO: Large directories update over time
+#include <fuse/fuse_lowlevel.h>
+
+std::unique_ptr<Im::DirectoryTraverser> dt;
+// TODO: How the hell do i keep this updated
+std::unique_ptr<Im::ActivityService> ct;
+Im::ImDB* db;
 
 static struct options {
     const char* base;
@@ -33,11 +39,11 @@ static const struct fuse_opt option_spec[] = {
     FUSE_OPT_END
 };
 
-Im::ImDB* db;
-Im::ActivityService* ct;
-
 static void* init(struct fuse_conn_info* conn)
 {
+    dt = std::make_unique<Im::DirectoryTraverser>(options.include_folders, Im::fsWatchStream);
+    ct = std::make_unique<Im::ActivityService>(std::vector<std::string> { options.base });
+    dt->flatten_dir(options.base);
     return nullptr;
 }
 
@@ -148,12 +154,10 @@ int main(int argc, char* argv[])
             }
             tokens.push_back(filter);
         }
-        ct = new Im::ActivityService({ options.base });
-        db = new Im::ImDB(options.base, tokens, options.include_folders);
+        db = new Im::ImDB(options.base, tokens);
     }
+    std::cout << "Ready. Kicking off." << std::endl;
     int ret = fuse_main(args.argc, args.argv, &operations, nullptr);
     fuse_opt_free_args(&args);
-    delete ct;
-    delete ct;
     return ret;
 }

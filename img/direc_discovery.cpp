@@ -18,14 +18,25 @@ DirectoryTraverser::DirectoryTraverser(bool include_folders, Im::EventStream& ev
 
 void DirectoryTraverser::flatten_dir(const std::string& path)
 {
-    this->runThread = std::thread([&]() {
-        this->list_directory(path);
-    });
+    std::cout << "Flattening dir" << std::endl;
+    //TODO: Could i spawn out more threads to get this done faster?
+    std::thread([path, this]() {
+        std::list<std::string> trials;
+        std::cout << "starting with: " << path << std::endl;
+        trials.push_back(path);
+        do {
+            auto thisPath = trials.front();
+            trials.pop_front();
+            auto nextPaths = list_directory(thisPath);
+            trials.insert(trials.end(), nextPaths.begin(), nextPaths.end());
+        } while (!trials.empty());
+    }).detach();
 }
 
-void DirectoryTraverser::list_directory(const std::string& path)
+std::list<std::string> DirectoryTraverser::list_directory(const std::string& path)
 {
     auto base = opendir(path.c_str());
+    std::list<std::string> res;
 
     if (base == nullptr) {
         std::cout << "Failed to open" << path << std::endl;
@@ -37,7 +48,7 @@ void DirectoryTraverser::list_directory(const std::string& path)
             continue;
 
         if (next->d_type == DT_DIR) {
-            list_directory(path + "/" + next->d_name);
+            res.push_back(path + "/" + next->d_name);
             if (this->include_folders) {
                 this->evt.accept(Im::FileEvent {
                     .type = UPDATED,
@@ -45,28 +56,17 @@ void DirectoryTraverser::list_directory(const std::string& path)
                     .path = path + "/" + next->d_name });
             }
         } else if (next->d_type == DT_REG) {
-            // struct stat st {
-            // };
-            // stat((path + "/" + next->d_name).c_str(), &st);
             auto name = findName(std::string(next->d_name));
             this->evt.accept(Im::FileEvent {
                 .type = UPDATED,
                 .nodeType = next->d_type,
                 .path = path + "/" + next->d_name });
-            // paths.push_back((Im::Node) {
-            //     .name = name,
-            //     .size = st.st_size,
-            //     .created = st.st_ctime,
-            //     .modified = st.st_mtime,
-            //     .accessed = st.st_atime,
-            //     .path = path + "/" + next->d_name,
-            //     .type = next->d_type,
-            // });
         }
     }
     if (closedir(base) != 0) {
         std::cout << "Error closing dir " << base << strerror(errno) << std::endl;
     }
+    return res;
 }
 
 //TODO: FindName isn't being used
@@ -92,7 +92,4 @@ std::string DirectoryTraverser::findName(std::string name)
     }
     return nc[name]->back();
 }
-DirectoryTraverser::~DirectoryTraverser()
-{
-    this->runThread.join();
-}
+DirectoryTraverser::~DirectoryTraverser() = default;

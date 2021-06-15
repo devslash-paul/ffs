@@ -23,9 +23,9 @@ public:
 private:
     bool include_folders;
     namecache nc;
-    const Im::EventStream& evt;
+    Im::EventStream& evt;
 
-    void list_directory(const std::string& path);
+    std::list<std::string> list_directory(const std::string& path);
     std::string findName(std::string);
     std::thread runThread;
 };

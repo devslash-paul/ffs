@@ -11,3 +11,5 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 add_subdirectory(img)
 add_subdirectory(src)
+
+INCLUDE(CPack)
